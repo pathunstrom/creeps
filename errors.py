@@ -1,0 +1,2 @@
+class GameQuit(KeyboardInterrupt):
+    pass
