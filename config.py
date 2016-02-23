@@ -10,9 +10,8 @@ FULL_SCREEN = False
 CONTROLS = {0: {'up': K_w, 'down': K_s, 'left': K_a, 'right': K_d}}
 PLAYER_SPEED = 40
 INITIAL_SPAWN = 5
-SPAWN_ZONE = 200
 
 # Developer Settings
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.CRITICAL
 TITLE = "Creeps"
-SPLASH_LENGTH = 250
+SPLASH_LENGTH = .25

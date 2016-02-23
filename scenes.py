@@ -47,8 +47,12 @@ class Game(Scene):
         image = Surface((20, 20)).convert(self.display)
         image.fill((255, 255, 255))
         mob.Player(image, 0, config, self.rendering, self.player, self.rendering)
-        self.camera = FollowCam(Vector(0, 0), self.player.sprite, config)
+        self.rendering.change_layer(self.player.sprite, 1)
+        self.camera = FollowCam(Vector(0, 0), self.player.sprite, config,
+                                max_dist=100, max_speed=(config.PLAYER_SPEED * 1.5))
         offset = self.camera.get_offset()
+        image = Surface((20, 20)).convert(self.display)
+        image.fill((0, 128, 0))
         for x in xrange(config.INITIAL_SPAWN):
             mob.Creep(image, self.player.sprite, offset, config, self.rendering, self.creeps, self.rendering)
 

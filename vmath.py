@@ -2,6 +2,7 @@ from __future__ import division
 from math import cos, hypot, radians, sin
 from numbers import Number
 
+# TODO: WRITE TESTS
 
 class Vector2(object):
 
@@ -88,15 +89,16 @@ class Vector2(object):
         return Vector2(x, y)
 
     def normalize(self):
-        if self.length:
-            x = self.x / self.length
-            y = self.y / self.length
-        else:
-            x, y = 0, 0
-        return Vector2(x, y)
+        return self.scale(1)
 
     def truncate(self, max_length):
         if self.length > max_length:
-            scalar = max_length/self.length
-            return Vector2(self.x * scalar, self.y * scalar)
+            return self.scale(max_length)
         return self
+
+    def scale(self, length):
+        try:
+            scale = length / self.length
+        except ZeroDivisionError:
+            scale = 1
+        return self * scale

@@ -45,7 +45,7 @@ def run(display_surface, clock, menu, config=None):
     push_scene(Splash(config, display_surface, menu))
 
     while running:
-        td = clock.tick(config.FPS)
+        td = clock.tick(config.FPS) / 1000.
         pressed = pygame.key.get_pressed()
         events = pygame.event.get()
         try:
@@ -152,19 +152,19 @@ class Splash(Scene):
 
 class FollowCam(object):
 
-    def __init__(self, pos, target, config, max_dist=50, max_portion=10.0):
+    def __init__(self, pos, target, config, max_dist=50, max_speed=10.0):
         self.pos = pos
         self.target = target
-        self.max = max_dist
-        self.portion = max_portion
+        self.max_distance = max_dist
+        self.speed = max_speed
         self.offset = Vector(config.RESOLUTION[0] / 2, config.RESOLUTION[1] / 2)
 
-    def update(self, td, *args):
-        velocity = Vector(*self.target.pos) - self.pos
-        distance = velocity.length
-        if distance > self.max:
-            movement = velocity.truncate(distance * ((td / 1000.) / self.portion))
-            self.pos += movement
+    def update(self, td):
+        direction = self.target.pos - self.pos
+        distance = direction.length
+        direction = direction.normalize()
+        if distance > self.max_distance:
+            self.pos += direction * self.speed * td
 
     def get_offset(self):
         return self.pos - self.offset

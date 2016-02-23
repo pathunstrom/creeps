@@ -34,7 +34,7 @@ class Player(DirtySprite):
         vert = keys[self._up] * -1 + keys[self._down]
         horiz = keys[self._left] * -1 + keys[self._right]
         if vert or horiz or self.prev_offset != camera:
-            direction = Vector(horiz, vert).normalize() * (self.velocity * (td / 1000.0))
+            direction = Vector(horiz, vert).normalize() * (self.velocity * td)
             self.pos += direction
             self.rect.center = tuple(self.pos - camera)
             self.dirty = 1
@@ -42,6 +42,12 @@ class Player(DirtySprite):
 
 
 class Creep(DirtySprite):
+
+    max_drive = 10
+    max_velocity = 30
+    drag = 1
+    spawn_zone = 200
+    sight_range = 50
 
     def __init__(self, image, player, camera, config, _map, *groups):
         super(Creep, self).__init__(*groups)
@@ -51,12 +57,40 @@ class Creep(DirtySprite):
         self.offset = None
         self.image = image
         self.rect = self.image.get_rect()
-        self.pos = Vector(random.randrange(self.player.pos[0] - config.SPAWN_ZONE, self.player.pos[0] + config.SPAWN_ZONE),
-                          random.randrange(self.player.pos[1] - config.SPAWN_ZONE, self.player.pos[1] + config.SPAWN_ZONE))
+        self.pos = Vector(random.randrange(self.player.pos[0] - self.spawn_zone, self.player.pos[0] + self.spawn_zone),
+                          random.randrange(self.player.pos[1] - self.spawn_zone, self.player.pos[1] + self.spawn_zone))
         self.rect.center = tuple(self.pos - camera)
+        self.target = None
+        self.velocity = Vector(10., 0.).rotate(random.randint(0, 360))
+        self.drive = random.randint(1, 10)
 
     def update(self, td, camera):
-        if camera != self.offset:
-            self.dirty = 1
-            self.rect.center = tuple(self.pos - camera)
+
+        old_pos = self.pos
+
+        if self.target is None:
+            logging.debug("Target is None")
+            self.get_target()
+        elif len(self.target - self.pos) < 15:
+            logging.critical("Target reached")
+            self.get_target()
+        else:
+            modifier = self.target - self.pos
+            self.velocity += (modifier.truncate(self.max_drive) * td)
+            self.velocity.truncate(self.max_velocity)
+
+
+
+        self.pos += self.velocity * td
+        self.dirty = 1
+        self.rect.center = tuple(self.pos - camera)
         self.offset = camera
+
+    def get_target(self):
+        if len(self.player.pos - self.pos) < 100:
+            self.target = self.player.pos
+        else:
+            x = int(self.pos['x'])
+            y = int(self.pos['y'])
+            self.target = Vector(random.randrange(x - self.sight_range, x + self.sight_range),
+                                 random.randrange(y - self.sight_range, y + self.sight_range))
