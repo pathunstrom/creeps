@@ -1,8 +1,11 @@
 from __future__ import division
+
 from math import cos, hypot, radians, sin
 from numbers import Number
 
+
 # TODO: WRITE TESTS
+
 
 class Vector2(object):
 

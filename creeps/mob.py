@@ -1,11 +1,15 @@
-from pygame.sprite import DirtySprite
-from pygame import K_s, K_d, K_w, K_a
-from vmath import Vector2 as Vector
-import random
 import logging
+import random
+
+from pygame import K_s, K_d, K_w, K_a
+from pygame.sprite import DirtySprite
+
+from pursuedpybear.vmath import Vector2 as Vector
 
 
 class Player(DirtySprite):
+
+    speed = 40
 
     def __init__(self, image, player, config, _map, *groups):
         super(Player, self).__init__(*groups)
@@ -13,10 +17,7 @@ class Player(DirtySprite):
         self.image = image
         self.rect = image.get_rect()
         self.pos = Vector(0, 0)
-        try:
-            self.velocity = config.PLAYER_SPEED
-        except AttributeError:
-            self.velocity = 20
+        self.velocity = self.speed
         try:
             controls = config.CONTROLS[player]
         except AttributeError:
@@ -47,9 +48,11 @@ class Creep(DirtySprite):
     max_velocity = 30
     drag = 1
     spawn_zone = 200
-    sight_range = 50
+    sight_range = 75
+    approach_range = 30
+    target_mod = 3
 
-    def __init__(self, image, player, camera, config, _map, *groups):
+    def __init__(self, image, m_image, player, camera, config, _map, *groups):
         super(Creep, self).__init__(*groups)
         self.config = config
         self.player = player
@@ -61,25 +64,28 @@ class Creep(DirtySprite):
                           random.randrange(self.player.pos[1] - self.spawn_zone, self.player.pos[1] + self.spawn_zone))
         self.rect.center = tuple(self.pos - camera)
         self.target = None
+        self.get_target()
         self.velocity = Vector(10., 0.).rotate(random.randint(0, 360))
-        self.drive = random.randint(1, 10)
+        self.drive = random.randint(1, self.max_drive)
+        Miasma(self, m_image, *groups)
 
     def update(self, td, camera):
 
         old_pos = self.pos
-
-        if self.target is None:
-            logging.debug("Target is None")
+        drive = self.target - self.pos
+        try:
+            target_distance = len(self.target - self.pos)
+        except TypeError:
             self.get_target()
-        elif len(self.target - self.pos) < 15:
-            logging.critical("Target reached")
+            target_distance = len(self.target - self.pos)
+        if target_distance < self.approach_range:
             self.get_target()
-        else:
-            modifier = self.target - self.pos
-            self.velocity += (modifier.truncate(self.max_drive) * td)
-            self.velocity.truncate(self.max_velocity)
 
-
+        move = (drive.truncate(self.max_drive) * td)
+        if target_distance < move.length:
+            self.get_target()
+        self.velocity += move
+        self.velocity.truncate(self.max_velocity)
 
         self.pos += self.velocity * td
         self.dirty = 1
@@ -87,10 +93,31 @@ class Creep(DirtySprite):
         self.offset = camera
 
     def get_target(self):
-        if len(self.player.pos - self.pos) < 100:
+        logging.debug("Acquiring target.")
+        player_target = len(self.player.pos - self.pos)
+        sight_distance = self.sight_range * self.target_mod
+        if player_target < sight_distance:
             self.target = self.player.pos
         else:
             x = int(self.pos['x'])
             y = int(self.pos['y'])
             self.target = Vector(random.randrange(x - self.sight_range, x + self.sight_range),
                                  random.randrange(y - self.sight_range, y + self.sight_range))
+
+
+class Miasma(DirtySprite):
+
+    def __init__(self, parent, image, *groups):
+        super(Miasma, self).__init__(*groups)
+        self.parent = parent
+        self.image = image
+        self.rect = image.get_rect()
+        for group in groups:
+            try:
+                group.change_layer(self, 2)
+            except AttributeError:
+                pass
+
+    def update(self, td, camera):
+        self.rect.center = tuple(self.parent.pos - camera)
+        self.dirty = 1

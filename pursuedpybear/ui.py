@@ -1,7 +1,7 @@
-from pygame.sprite import DirtySprite
-from pygame.font import SysFont
 import pygame.event as event
+from pygame.font import SysFont
 from pygame.locals import USEREVENT
+from pygame.sprite import DirtySprite
 
 
 class Button(DirtySprite):

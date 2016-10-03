@@ -1,11 +1,11 @@
-from engine import Scene, FollowCam
 import pygame.sprite as sprite
-import ui
-import mob
-from pygame.locals import MOUSEBUTTONDOWN, USEREVENT
 from pygame import Surface
-from vmath import Vector2 as Vector
-import logging
+from pygame.locals import MOUSEBUTTONDOWN, USEREVENT
+
+from creeps import mob
+from pursuedpybear import ui
+from pursuedpybear.engine import Scene, FollowCam
+from pursuedpybear.vmath import Vector2 as Vector
 
 
 class Menu(Scene):
@@ -49,12 +49,15 @@ class Game(Scene):
         mob.Player(image, 0, config, self.rendering, self.player, self.rendering)
         self.rendering.change_layer(self.player.sprite, 1)
         self.camera = FollowCam(Vector(0, 0), self.player.sprite, config,
-                                max_dist=100, max_speed=(config.PLAYER_SPEED * 1.5))
+                                max_dist=100, max_speed=(60))
         offset = self.camera.get_offset()
         image = Surface((20, 20)).convert(self.display)
         image.fill((0, 128, 0))
+        m_image = Surface((100, 100)).convert(self.display)
+        m_image.set_alpha(64)
+        m_image.fill((128, 64, 192))
         for x in xrange(config.INITIAL_SPAWN):
-            mob.Creep(image, self.player.sprite, offset, config, self.rendering, self.creeps, self.rendering)
+            mob.Creep(image, m_image, self.player.sprite, offset, config, self.rendering, self.creeps, self.rendering)
 
     def manage(self, events, pressed, *args, **kwargs):
         return super(Game, self).manage(events, pressed, *args, **kwargs)
@@ -62,8 +65,9 @@ class Game(Scene):
     def update(self, time_delta, keys_pressed, *args, **kwargs):
         super(Game, self).update(time_delta, keys_pressed, *args, **kwargs)
         self.camera.update(time_delta)
-        self.player.update(time_delta, keys_pressed, self.camera.get_offset())
-        self.creeps.update(time_delta, self.camera.get_offset())
+        offset = self.camera.get_offset()
+        self.player.update(time_delta, keys_pressed, offset)
+        self.creeps.update(time_delta, offset)
         return "continue", None
 
     def render(self, display_surface):

@@ -1,9 +1,10 @@
-import pygame
-import errors
 import logging
-from pygame.locals import K_LALT, K_RALT, K_ESCAPE, QUIT
 from collections import defaultdict
+
+import pygame
 from pygame import Surface
+from pygame.locals import K_LALT, K_RALT, K_ESCAPE, QUIT
+
 from vmath import Vector2 as Vector
 
 scenes = []
@@ -36,7 +37,7 @@ def commands(command, scene):
     elif command == "replace":
         replace_scene(scene)
     elif command == "quit":
-        raise errors.GameQuit
+        raise GameQuit
 
 
 def run(display_surface, clock, menu, config=None):
@@ -53,7 +54,7 @@ def run(display_surface, clock, menu, config=None):
             commands(*cur_scene.manage(events, pressed))
             commands(*cur_scene.update(td, pressed))
             updates = cur_scene.render(display_surface)
-        except errors.GameQuit:
+        except GameQuit:
             return
         if config.FULL_SCREEN:
             pygame.display.flip()
@@ -114,7 +115,7 @@ class Splash(Scene):
         try:
             self.time = config.SPLASH_LENGTH
         except AttributeError:
-            self.time = 3000
+            self.time = .3
 
         try:
             title = config.TITLE
@@ -168,3 +169,7 @@ class FollowCam(object):
 
     def get_offset(self):
         return self.pos - self.offset
+
+
+class GameQuit(KeyboardInterrupt):
+    pass

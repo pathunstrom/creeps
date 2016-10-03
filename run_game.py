@@ -1,8 +1,10 @@
-import pygame
 import logging
+
+import pygame
+
 import config
-import engine
-import scenes
+from creeps import scenes
+from pursuedpybear import engine
 
 
 def run():
