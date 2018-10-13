@@ -1,3 +1,10 @@
+from itertools import product
+from os import getenv
+from random import choices
+from random import seed
+from string import ascii_letters
+from string import digits
+from string import punctuation
 from typing import Sequence
 
 from ppb import BaseSprite
@@ -92,4 +99,27 @@ class Spawner(BaseSprite):
     """
     This is where most of the code for adding objects to the game exists.
     """
-    pass
+    image = DoNotRender
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _seed = getenv("CREEPS_SEED")
+        if _seed is None:
+            _seed = ''.join(choices(ascii_letters + digits + punctuation, k=10))
+        self.seed = _seed
+        self.choices = (Bush, None)
+        self.weights = (25, 75)
+        self.created_zones = {}
+
+    def on_pre_render(self, event, signal):
+        core_position = event.scene.player.position
+        min_x = int((core_position.x // 10) * 10)
+        min_y = int((core_position.y // 10) * 10)
+        if (min_x, min_y) not in self.created_zones:
+            _seed = self.seed + f"{min_x}-{min_y}"
+            seed(_seed)
+            results = choices(self.choices, weights=self.weights, k=100)
+            self.created_zones[(min_x, min_y)] = {"spawned": True, "classes": results}
+            for (x, y), cls in zip(product(range(min_x, min_x + 10), range(min_y, min_y + 10)), results):
+                if cls is not None:
+                    event.scene.add(cls(scene=event.scene, pos=Vector(x, y)))
