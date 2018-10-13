@@ -6,7 +6,24 @@ from ppb.flags import DoNotRender
 from pygame import key
 
 
+class Bush(BaseSprite):
+
+    def __init__(self, scene, **kwargs):
+        super().__init__(**kwargs)
+        scene.add(Pusher(pos=self.top.center, facing=Vector(0, -1), size=0.25))
+        scene.add(Pusher(pos=self.top.left, facing=Vector(-1, -1).normalize(), size=0.25))
+        scene.add(Pusher(pos=self.left.center, facing=Vector(-1, 0), size=0.25))
+        scene.add(Pusher(pos=self.left.bottom, facing=Vector(-1, 1).normalize(), size=0.25))
+        scene.add(Pusher(pos=self.bottom.center, facing=Vector(0, 1), size=0.25))
+        scene.add(Pusher(pos=self.bottom.right, facing=Vector(1, 1).normalize(), size=0.25))
+        scene.add(Pusher(pos=self.right.center, facing=Vector(1, 0), size=0.25))
+        scene.add(Pusher(pos=self.right.top, facing=Vector(1, -1).normalize(), size=0.25))
+
+
 class Controller(BaseSprite):
+    """
+    An abstraction around the keyboard.
+    """
     image = DoNotRender
 
     def __init__(self, axes: Sequence, buttons: Sequence):
@@ -43,6 +60,9 @@ class Controller(BaseSprite):
 
 
 class Player(BaseSprite):
+    """
+    The player class. Will own any data that belongs to play mechanics.
+    """
     speed = 5
 
     def __init__(self, controller, *args, **kwargs):
@@ -57,3 +77,19 @@ class Player(BaseSprite):
         camera = event.scene.main_camera
         camera_path = self.position - camera.position
         camera.position += camera_path * 0.05
+
+
+class Pusher(BaseSprite):
+    image = DoNotRender
+
+    def on_update(self, event, signal):
+        player = event.scene.player
+        if (player.position - self.position).length <= self.game_unit_size:
+            player.position += self.facing.scale(self.game_unit_size)
+
+
+class Spawner(BaseSprite):
+    """
+    This is where most of the code for adding objects to the game exists.
+    """
+    pass
