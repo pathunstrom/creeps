@@ -15,6 +15,9 @@ from ppb import Vector
 from ppb.flags import DoNotRender
 from pygame import key
 
+from creeps.states import wander
+
+
 DOWN_LEFT = Vector(-1, 1)
 DOWN_RIGHT = Vector(1, 1)
 UP_LEFT = Vector(-1, -1)
@@ -44,24 +47,23 @@ class Bush(CreepsBase, BaseSprite):
 
 
 class Creep(CreepsBase, BaseSprite):
-    circle_radius = 1
+    circle_radius = 2
     angle_change = 10
+    max_force = 2
+    speed = 1
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.speed = 1
         self.wander_angle = randint(0, 359)
         self.velocity = Vector(-1, 0).rotate(self.wander_angle).scale(self.speed * _random())
-        self.state =
+        self.state = wander
 
     def on_update(self, event, signal):
-        circle = self.velocity.scale(self.speed / 2)
-        angle_change = _random() * self.angle_change - self.angle_change * .5
-        self.wander_angle = (self.wander_angle + angle_change) % 360
-        displacement = Vector(0, -1).rotate(self.wander_angle).scale(self.circle_radius)
-        wander = circle + displacement
-        self.velocity = (self.velocity + wander).truncate(self.speed)
-        self.position += self.velocity * event.time_delta
+        self.state(self, event, signal)
+
+    def on_behavior_check(self, event, signal):
+        print("Behavior check")
+        self.state = wander
 
 
 class Controller(BaseSprite):
