@@ -28,7 +28,7 @@ class Bush(BaseSprite, Detector):
 
     def on_update(self, event, signal):
         player = event.scene.player
-        if (player.position - self.position).length < .9:
+        if (player.position - self.position).length < .6:
             push_vector = Vector(0, 0)
             if self.point_is_in(player.bottom.left):
                 push_vector += UP_RIGHT
@@ -38,7 +38,7 @@ class Bush(BaseSprite, Detector):
                 push_vector += DOWN_LEFT
             if self.point_is_in(player.top.left):
                 push_vector += DOWN_RIGHT
-            player.position += push_vector.normalize() * 0.2
+            player.position += push_vector.normalize() * .3
 
 
 class Controller(BaseSprite):
@@ -113,18 +113,21 @@ class Spawner(BaseSprite):
             _seed = ''.join(choices(ascii_letters + digits + punctuation, k=10))
         self.seed = _seed
         self.choices = (Bush, None)
-        self.weights = (10, 90)
+        self.weights = (15, 85)
         self.created_zones = {}
 
     def on_pre_render(self, event, signal):
         core_position = event.scene.player.position
         min_x = int((core_position.x // 10) * 10)
         min_y = int((core_position.y // 10) * 10)
-        if (min_x, min_y) not in self.created_zones:
-            _seed = self.seed + f"{min_x}-{min_y}"
+        cells = list(product(range(min_x - 10, min_x + 20, 10), range(min_y - 10, min_y + 20, 10)))
+        for c_x, c_y in cells:
+            if (c_x, c_y) in self.created_zones:
+                continue
+            _seed = self.seed + f"{c_x}-{c_y}"
             seed(_seed)
             results = choices(self.choices, weights=self.weights, k=100)
-            self.created_zones[(min_x, min_y)] = {"spawned": True, "classes": results}
-            for (x, y), cls in zip(product(range(min_x, min_x + 10), range(min_y, min_y + 10)), results):
+            self.created_zones[(c_x, c_y)] = {"spawned": True, "classes": results}
+            for (x, y), cls in zip(product(range(c_x, c_x + 10), range(c_y, c_y + 10)), results):
                 if cls is not None:
-                    event.scene.add(cls(scene=event.scene, pos=Vector(x, y)))
+                    event.scene.add(cls(pos=Vector(x, y)))
