@@ -1,7 +1,10 @@
 from itertools import product
 from os import getenv
+from pathlib import Path
 from random import choices
 from random import seed
+from random import randint
+from random import random as _random
 from string import ascii_letters
 from string import digits
 from string import punctuation
@@ -18,14 +21,13 @@ UP_LEFT = Vector(-1, -1)
 UP_RIGHT = Vector(1, -1)
 
 
-class Detector:
-
+class CreepsBase:
+    resource_path = Path("/Users/piper/src/pathunstrom/creeps/creeps/resources")
     def point_is_in(self, p: Vector) -> bool:
-        return (self.left < p.x < self.right) and (self.top < p.y < self.bottom)
+        return (self.left <= p.x <= self.right) and (self.top <= p.y <= self.bottom)
 
 
-class Bush(BaseSprite, Detector):
-
+class Bush(CreepsBase, BaseSprite):
     def on_update(self, event, signal):
         player = event.scene.player
         if (player.position - self.position).length < .6:
@@ -39,6 +41,27 @@ class Bush(BaseSprite, Detector):
             if self.point_is_in(player.top.left):
                 push_vector += DOWN_RIGHT
             player.position += push_vector.normalize() * .3
+
+
+class Creep(CreepsBase, BaseSprite):
+    circle_radius = 1
+    angle_change = 10
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.speed = 1
+        self.wander_angle = randint(0, 359)
+        self.velocity = Vector(-1, 0).rotate(self.wander_angle).scale(self.speed * _random())
+        self.state =
+
+    def on_update(self, event, signal):
+        circle = self.velocity.scale(self.speed / 2)
+        angle_change = _random() * self.angle_change - self.angle_change * .5
+        self.wander_angle = (self.wander_angle + angle_change) % 360
+        displacement = Vector(0, -1).rotate(self.wander_angle).scale(self.circle_radius)
+        wander = circle + displacement
+        self.velocity = (self.velocity + wander).truncate(self.speed)
+        self.position += self.velocity * event.time_delta
 
 
 class Controller(BaseSprite):
@@ -80,7 +103,7 @@ class Controller(BaseSprite):
             return v
 
 
-class Player(BaseSprite):
+class Player(CreepsBase, BaseSprite):
     """
     The player class. Will own any data that belongs to play mechanics.
     """
