@@ -12,19 +12,33 @@ from ppb import Vector
 from ppb.flags import DoNotRender
 from pygame import key
 
+DOWN_LEFT = Vector(-1, 1)
+DOWN_RIGHT = Vector(1, 1)
+UP_LEFT = Vector(-1, -1)
+UP_RIGHT = Vector(1, -1)
 
-class Bush(BaseSprite):
 
-    def __init__(self, scene, **kwargs):
-        super().__init__(**kwargs)
-        scene.add(Pusher(pos=self.top.center, facing=Vector(0, -1), size=0.25))
-        scene.add(Pusher(pos=self.top.left, facing=Vector(-1, -1).normalize(), size=0.25))
-        scene.add(Pusher(pos=self.left.center, facing=Vector(-1, 0), size=0.25))
-        scene.add(Pusher(pos=self.left.bottom, facing=Vector(-1, 1).normalize(), size=0.25))
-        scene.add(Pusher(pos=self.bottom.center, facing=Vector(0, 1), size=0.25))
-        scene.add(Pusher(pos=self.bottom.right, facing=Vector(1, 1).normalize(), size=0.25))
-        scene.add(Pusher(pos=self.right.center, facing=Vector(1, 0), size=0.25))
-        scene.add(Pusher(pos=self.right.top, facing=Vector(1, -1).normalize(), size=0.25))
+class Detector:
+
+    def point_is_in(self, p: Vector) -> bool:
+        return (self.left < p.x < self.right) and (self.top < p.y < self.bottom)
+
+
+class Bush(BaseSprite, Detector):
+
+    def on_update(self, event, signal):
+        player = event.scene.player
+        if (player.position - self.position).length < .9:
+            push_vector = Vector(0, 0)
+            if self.point_is_in(player.bottom.left):
+                push_vector += UP_RIGHT
+            if self.point_is_in(player.bottom.right):
+                push_vector += UP_LEFT
+            if self.point_is_in(player.top.right):
+                push_vector += DOWN_LEFT
+            if self.point_is_in(player.top.left):
+                push_vector += DOWN_RIGHT
+            player.position += push_vector.normalize() * 0.2
 
 
 class Controller(BaseSprite):
@@ -86,15 +100,6 @@ class Player(BaseSprite):
         camera.position += camera_path * 0.05
 
 
-class Pusher(BaseSprite):
-    image = DoNotRender
-
-    def on_update(self, event, signal):
-        player = event.scene.player
-        if (player.position - self.position).length <= self.game_unit_size:
-            player.position += self.facing.scale(self.game_unit_size)
-
-
 class Spawner(BaseSprite):
     """
     This is where most of the code for adding objects to the game exists.
@@ -108,7 +113,7 @@ class Spawner(BaseSprite):
             _seed = ''.join(choices(ascii_letters + digits + punctuation, k=10))
         self.seed = _seed
         self.choices = (Bush, None)
-        self.weights = (25, 75)
+        self.weights = (10, 90)
         self.created_zones = {}
 
     def on_pre_render(self, event, signal):
