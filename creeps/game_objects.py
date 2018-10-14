@@ -15,7 +15,7 @@ from ppb import Vector
 from ppb.flags import DoNotRender
 from pygame import key
 
-from creeps.states import wander
+import creeps.states as state
 
 
 DOWN_LEFT = Vector(-1, 1)
@@ -56,14 +56,19 @@ class Creep(CreepsBase, BaseSprite):
         super().__init__(*args, **kwargs)
         self.wander_angle = randint(0, 359)
         self.velocity = Vector(-1, 0).rotate(self.wander_angle).scale(self.speed * _random())
-        self.state = wander
+        self.state = state.wander
+        self.target = None
 
     def on_update(self, event, signal):
         self.state(self, event, signal)
+        self.position += self.velocity * event.time_delta
 
     def on_behavior_check(self, event, signal):
-        print("Behavior check")
-        self.state = wander
+        if (event.scene.player.position - self.position).length < 4:
+            self.target = event.scene.player.position
+            self.state = state.seek
+        else:
+            self.state = state.wander
 
 
 class Controller(BaseSprite):
