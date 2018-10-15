@@ -64,7 +64,11 @@ class Creep(CreepsBase, BaseSprite):
         self.position += self.velocity * event.time_delta
 
     def on_behavior_check(self, event, signal):
-        if (event.scene.player.position - self.position).length < 4:
+        player_position = event.scene.player.position
+        distance_to_player = (player_position - self.position).length
+        if distance_to_player > 20:
+            self.state = state.dormant
+        elif distance_to_player < 4:
             self.target = event.scene.player.position
             self.state = state.seek
         else:
@@ -127,7 +131,7 @@ class Player(CreepsBase, BaseSprite):
     def on_pre_render(self, event, signal):
         camera = event.scene.main_camera
         camera_path = self.position - camera.position
-        camera.position += camera_path * 0.05
+        camera.position += camera_path * 0.1
 
 
 class Spawner(BaseSprite):
@@ -142,8 +146,8 @@ class Spawner(BaseSprite):
         if _seed is None:
             _seed = ''.join(choices(ascii_letters + digits + punctuation, k=10))
         self.seed = _seed
-        self.choices = (Bush, None)
-        self.weights = (15, 85)
+        self.choices = (Bush, Creep, None)
+        self.weights = (15, 1, 84)
         self.created_zones = {}
 
     def on_pre_render(self, event, signal):
@@ -161,3 +165,4 @@ class Spawner(BaseSprite):
             for (x, y), cls in zip(product(range(c_x, c_x + 10), range(c_y, c_y + 10)), results):
                 if cls is not None:
                     event.scene.add(cls(pos=Vector(x, y)))
+        

@@ -4,7 +4,6 @@ from pygame import K_a
 from pygame import K_s
 from pygame import K_d
 
-from creeps.game_objects import Creep
 from creeps.game_objects import Controller
 from creeps.game_objects import Player
 from creeps.game_objects import Spawner
@@ -21,7 +20,6 @@ class MainScene(BaseScene):
                                 buttons=())
         self.add(controller)
         self.add(Player(controller), ["player"])
-        self.add(Creep(pos=(3, 3)))
 
     @property
     def player(self):

@@ -3,6 +3,10 @@ from random import random as rand
 from ppb import Vector
 
 
+def dormant(sprite, event, signal):
+    pass
+
+
 def seek(sprite, event, signal):
     desired_velocity = (sprite.target - sprite.position).scale(sprite.speed)
     steering_force = (desired_velocity - sprite.velocity).scale(sprite.max_force)
